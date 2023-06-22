@@ -8,10 +8,18 @@ class HBNBCommand:
     __file_path = 'file.json'
     __objects = {}
 
-    def all(self):
+    def all(self, cls=none):
         """Returns a dictionary of models currently in storage"""
-        return FileStorage.__objects
-
+        if cls is not None:
+            if type(cls) == str:
+                cls = eval(cls)
+            cls_dict = {}
+            for k, v in self.__objects.items():
+                if type(v) == cls:
+                    cls_dict[k] = v
+            return cls_dict
+        return self.__objects
+    
     def new(self, obj):
         """Adds new object to storage dictionary"""
         self.all().update({obj.to_dict()['__class__'] + '.' + obj.id: obj})
@@ -25,9 +33,9 @@ class HBNBCommand:
                 temp[key] = val.to_dict()
             json.dump(temp, f)
 
-def reload(self):
+    def reload(self):
         """Loads storage dictionary from file"""
-        import unittest
+        import json
         from models.base_model import BaseModel
         from models.user import User
         from models.place import Place
@@ -49,32 +57,14 @@ def reload(self):
                         self.all()[key] = classes[val['__class__']](**val)
         except FileNotFoundError:
             pass
+        
+    def delete(self, obj=None):
+        """Delete a given object from __objects, if it exists."""
+        try:
+            del self.__objects["{}.{}".format(type(obj).__name__, obj.id)]
+        except (AttributeError, KeyError):
+            pass
 
-class HBNBCommand(unittest.TestCase):
-    def setUp(self):
-        self.hbnb = HBNBCommand()
-        self.storage = HBNBCommand()
-        self.hbnb.storage = self.storage
-
-    def tearDown(self):
-        self.storage._FileStorage__objects = {}
-
-    # Add your tests here
-    
-    def test_do_create_with_parameters(self):
-        # Test with string and integer parameters
-        self.assertFalse(self.storage.all())  # Ensure storage is empty
-
-        # Create an object of the class with string and integer parameters
-        self.hbnb.do_create("MyClass string_param=\"Hello\" int_param=123")
-
-        # Check if the object was created and saved
-        objects = self.storage.all()
-        self.assertEqual(len(objects), 1)  # Expecting 1 object in storage
-        obj = list(objects.values())[0]
-        self.assertEqual(obj.__class__.__name__, "MyClass")  # Object class should match
-        self.assertEqual(obj.string_param, "Hello")  # string_param should match
-        self.assertEqual(obj.int_param, 123)  # int_param should match
-
-    if __name__ == '__main__':
-        unittest.main()
+    def close(self):
+        """Call the reload method."""
+        self.reload()
